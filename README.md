@@ -1,5 +1,7 @@
-A Laravel package for the model internationalisation
+A Laravel package for models internationalisation
 =======================
+
+WIP
 
 ## Change log
 Please, see [CHANGELOG](CHANGELOG.md) for more information about what has changed recently.
