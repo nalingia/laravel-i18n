@@ -1,0 +1,48 @@
+{
+  "name": "nalingia/laravel-i18n",
+  "description": "A Laravel package for model internationalisation.",
+  "keywords": [
+    "i18n",
+    "orm",
+    "model",
+    "eloquent"
+  ],
+  "type": "library",
+  "require": {
+    "php": "^7.0",
+    "illuminate/support": "^5.4.0",
+    "illuminate/filesystem": "^5.4.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.2",
+    "orchestra/testbench": "^3.4"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Gianmarco Nalin",
+      "email": "gianma.nalin89@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Nalingia\\I18n\\": "./src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Nalingia\\I18n\\Tests\\": "./tests"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Nalingia\\I18n\\I18nServiceProvider"
+      ]
+    }
+  },
+  "minimum-stability": "stable"
+}
