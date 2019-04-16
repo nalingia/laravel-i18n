@@ -13,7 +13,7 @@ class I18nTablesCommand extends Command {
    *
    * @var string
    */
-  protected $name = 'i18n:tables';
+  protected $name = 'i18n:table';
 
   /**
    * The console command description.
