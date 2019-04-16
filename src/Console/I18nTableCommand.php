@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Composer;
 
-class I18nTablesCommand extends Command {
+class I18nTableCommand extends Command {
 
   /**
    * The console command name.
