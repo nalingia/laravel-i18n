@@ -20,7 +20,7 @@ class I18nTablesCommand extends Command {
    *
    * @var string
    */
-  protected $description = 'Create migrations for catalogue and languages tables.';
+  protected $description = 'Create migrations for catalogue table.';
 
   /**
    * The filesystem instance.
@@ -55,13 +55,10 @@ class I18nTablesCommand extends Command {
    * @return void
    */
   public function handle() {
-    $languagesMigrationPath = $this->createBaseMigration('create_languages_table');
-    $this->_filesystem->put($languagesMigrationPath, $this->_filesystem->get(__DIR__ . '/stubs/languages.stub'));
-
     $languagesMigrationPath = $this->createBaseMigration('create_catalogue_items_table');
     $this->_filesystem->put($languagesMigrationPath, $this->_filesystem->get(__DIR__ . '/stubs/catalogueItems.stub'));
 
-    $this->info('Migrations created succesfully!');
+    $this->info('Migrations created successfully!');
 
     $this->_composer->dumpAutoloads();
   }

@@ -19,8 +19,6 @@ class CreateCatalogueItemsTable extends Migration {
       $table->string('lang', 5);
       $table->morphs('catalogable');
       $table->timestamps();
-
-      $table->foreign('lang', 'catalogue_items_languages_fk')->references('id')->on('languages')->onUpdate('CASCADE')->onDelete('CASCADE');
     });
   }
 
