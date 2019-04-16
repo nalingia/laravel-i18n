@@ -1,0 +1,19 @@
+language: php
+
+php:
+  - 7.2
+  - 7.3
+
+services:
+  - mysql
+
+script:
+  composer test
+
+before_script:
+  - travis_retry composer self-update
+  - travis_retry composer install --no-interaction --prefer-dist
+  - travis_retry composer dump-autoload -o
+
+before_install:
+  -mysql -e 'CREATE DATABASE i18n;'
