@@ -56,7 +56,7 @@ class I18nTablesCommand extends Command {
    */
   public function handle() {
     $languagesMigrationPath = $this->createBaseMigration('create_catalogue_items_table');
-    $this->_filesystem->put($languagesMigrationPath, $this->_filesystem->get(__DIR__ . '/stubs/catalogueItems.stub'));
+    $this->_filesystem->put($languagesMigrationPath, $this->_filesystem->get(database_path('migrations/create_catalogue_items_table.php.stub')));
 
     $this->info('Migrations created successfully!');
 

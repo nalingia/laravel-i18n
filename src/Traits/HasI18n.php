@@ -4,17 +4,18 @@ namespace Nalingia\I18n\Traits;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Nalingia\I18n\Models\CatalogueItem;
 use Nalingia\I18n\Exceptions\AttributeIsNonCatalogable;
 
 trait HasI18n {
 
   public function catalogueItems() {
-    return $this->morphMany('Nalingia\I18n\Models\CatalogueItems', $this->getCatalogueMorphName());
+    return $this->morphMany(CatalogueItem::class, $this->getCatalogueMorphName());
   }
 
-  public function getAttributeValue($key) {
+  public function getAttribute($key) {
     if (!$this->isCatalogueAttribute($key)) {
-      return parent::getAttributeValue($key);
+      return parent::getAttribute($key);
     }
 
     return $this->getCatalogueItem($key, $this->getLocale());
@@ -35,10 +36,13 @@ trait HasI18n {
   }
 
   public function translate(string $key, string $locale = '') : ?string {
+    $this->guardNonCatalogableAttribute($key);
     return $this->getCatalogueItem($key, $locale);
   }
 
   public function getCatalogueItem(string $key, string $locale, bool $useFallbackLocale = true) : ?string {
+    $this->guardNonCatalogableAttribute($key);
+
     $locale = $this->getNormalisedLocale($key, $locale, $useFallbackLocale);
 
     $catalogueItem = (string) $this->catalogueItems
@@ -54,27 +58,34 @@ trait HasI18n {
   }
 
   public function setCatalogueItem(string $key, string $locale, $value) : self {
+    $this->guardNonCatalogableAttribute($key);
+
     if ($this->hasSetMutator($key)) {
       $method = 'set' . Str::studly($key) . 'Attribute';
-      $this->{$method}($value, $locale);
-
-      $value = $this->attributes[$key];
+      $value = $this->{$method}($value, $locale);
     }
 
-    $this->catalogueItems()
+    $item = $this->catalogueItems()
       ->updateOrCreate(
         ['key' => $key, $this->getLocaleIdentifier() => $locale ],
         ['value' => $value ]
       );
 
+    $this->catalogueItems = $this->catalogueItems->reject(function ($item) use ($locale, $key) {
+      return $item->{$this->getLocaleIdentifier()} == $locale && $item->key == $key;
+    });
+
+    $this->catalogueItems->push($item);
+
     return $this;
   }
 
-  public function hasCatalogueItem(string $key, ?string $locale) : bool {
+  public function hasCatalogueItem(string $key, ?string $locale = null) : bool {
     $locale = $locale ?? $this->getLocale();
 
     return $this->catalogueItems
       ->where($this->getLocaleIdentifier(), $locale)
+      ->keyBy('key')
       ->has($key);
   }
 
@@ -84,13 +95,21 @@ trait HasI18n {
       ->where($this->getLocaleIdentifier(), $locale)
       ->delete();
 
+    $this->catalogueItems = $this->catalogueItems->reject(function ($item) use ($locale, $key) {
+      return $item->{$this->getLocaleIdentifier()} == $locale && $item->key == $key;
+    });
+
     return $this;
   }
 
-  public function forgetAllCatalogueItems(string $locale) : self {
+  public function forgetCatalogueItemsForLocale(string $locale) : self {
     $this->catalogueItems()
       ->where($this->getLocaleIdentifier(), $locale)
       ->delete();
+
+    $this->catalogueItems = $this->catalogueItems->reject(function ($item) use ($locale) {
+      return $item->{$this->getLocaleIdentifier()} == $locale;
+    });
 
     return $this;
   }
@@ -112,12 +131,35 @@ trait HasI18n {
       });
   }
 
-  public function getCatalogueItems(string $key = null) : Collection {
+  public function getCatalogueItems(?string $key = null) : Collection {
+    if (!is_null($key)) {
+      $this->guardNonCatalogableAttribute($key);
+    }
+
     return $this->catalogueItems
+      ->toBase()
       ->when(!is_null($key), function ($items) use ($key) {
-        return $items->where('key', $key);
+        return $items
+          ->where('key', $key)
+          ->mapWithKeys(function ($item) {
+            return [
+              $item->{$this->getLocaleIdentifier()} => $item->value,
+            ];
+          });
       })
-      ->toBase();
+      ->when(is_null($key), function ($items) {
+        return $items
+          ->groupBy('key')
+          ->mapWithKeys(function ($items, $key) {
+            return [
+              $key => $items->mapWithKeys(function ($item) {
+                return [
+                  $item->{$this->getLocaleIdentifier()} => $item->value,
+                ];
+              }),
+            ];
+          });
+      });
   }
 
   protected function getCatalogueMorphName() {
@@ -150,7 +192,7 @@ trait HasI18n {
     return $locale;
   }
 
-  protected function getCatalogueLocalesForAttribute($key) : array {
+  public function getCatalogueLocalesForAttribute($key) : array {
     return $this->catalogueItems
       ->where('key', $key)
       ->pluck('lang')

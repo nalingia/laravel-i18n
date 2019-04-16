@@ -25,15 +25,13 @@ class CatalogueItem extends Model {
   protected $hidden = [
     'id',
     'catalogable_id',
-    'catalogable_type'
+    'catalogable_type',
+    'created_at',
+    'updated_at',
   ];
 
   public function catalogable() {
     return $this->morphTo();
-  }
-
-  public function language() {
-    return $this->hasOne(Language::class, 'id', 'lang');
   }
 
   public function __toString() {
