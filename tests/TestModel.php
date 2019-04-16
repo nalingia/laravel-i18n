@@ -13,6 +13,10 @@ class TestModel extends Model {
 
   protected $guarded = [];
 
+  protected $with = [
+    'catalogueItems',
+  ];
+
   public $timestamps = false;
 
   public $catalogueAttributes = [
