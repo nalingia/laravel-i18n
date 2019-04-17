@@ -2,7 +2,7 @@ An _opinionated_ Laravel package for models internationalisation
 =======================
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/nalingia/laravel-i18n.svg?style=flat-square)](https://packagist.org/packages/nalingia/laravel-i18n)
-[![Build Status](https://travis-ci.org/nalingia/laravel-i18n.svg?branch=master)](https://travis-ci.org/nalingia/laravel-i18n)
+[![Build Status](https://travis-ci.com/nalingia/laravel-i18n.svg?branch=master)](https://travis-ci.com/nalingia/laravel-i18n)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 [![Total Downloads](https://img.shields.io/packagist/dt/nalingia/laravel-i18n.svg?style=flat-square)](https://packagist.org/packages/nalingia/laravel-i18n)
 
@@ -97,10 +97,10 @@ $article->abstract = 'Exciting abstract...';
 If you want to translate in locales different to the application one you can call `setCatalogueItem(string $key, string $locale, $value)`:
 ```php
 $article
-  ->setCatalogueItems('title', 'en', 'English title')
-  ->setCatalogueItems('abstract', 'en', 'English abstract')
-  ->setCatalogueItems('title', 'it', 'Italian title')
-  ->setCatalogueItems('abstract', 'it', 'Italian abstract');
+  ->setCatalogueItem('title', 'en', 'English title')
+  ->setCatalogueItem('abstract', 'en', 'English abstract')
+  ->setCatalogueItem('title', 'it', 'Italian title')
+  ->setCatalogueItem('abstract', 'it', 'Italian abstract');
 ```
 
 #### Remove a catalotue item
