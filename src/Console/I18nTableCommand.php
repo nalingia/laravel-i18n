@@ -75,10 +75,11 @@ class I18nTableCommand extends Command {
   /**
    * Create a migration with the given name.
    *
+   * @param string $name
    * @return string Migration path.
    */
   private function createBaseMigration($name) {
-    $path = $this->getLaravel()->getDatabasePath() . '/migrations';
+    $path = database_path('migrations');
     return $this->getLaravel()['migration.creator']->create($name, $path);
   }
 }
