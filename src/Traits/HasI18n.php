@@ -2,7 +2,10 @@
 
 namespace Nalingia\I18n\Traits;
 
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Nalingia\I18n\Models\CatalogueItem;
 use Nalingia\I18n\Exceptions\AttributeIsNonCatalogable;
@@ -160,6 +163,47 @@ trait HasI18n {
             ];
           });
       });
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Use `catalogue` key on `$attributes` to create translations.
+   *
+   * @param self $parent
+   */
+  public static function create(array $attributes = []) {
+    $instance = new static;
+
+    $catalogue = collect($instance->getCatalogueAttributes())
+      ->mapWithKeys(function ($attribute) use (&$attributes) {
+        return [ $attribute => Arr::pull($attributes, $attribute) ];
+      })
+      ->filter(function ($translations) {
+        return !is_null($translations);
+      });
+
+    $instance->fill($attributes);
+    $instance->save();
+
+    $items = new EloquentCollection;
+
+    $catalogue
+      ->each(function ($translations, $attribute) use (&$instance, &$items) {
+        collect($translations)
+          ->each(function ($value, $locale) use ($attribute, &$instance, &$items) {
+            $locale = is_numeric($locale) ? $instance->getLocale() : $locale;
+            $item = $instance->catalogueItems()
+              ->create([
+                'key' => $attribute,
+                $instance->getLocaleIdentifier() => $locale ,
+                'value' => $value
+              ]);
+            $items->add($item);
+          });
+      });
+
+    return $instance->setRelation('catalogueItems', $items);
   }
 
   protected function getCatalogueMorphName() {
