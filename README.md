@@ -113,6 +113,41 @@ Or, you can delete all translation for a locale:
 public function forgetCatalogueItemsForLocale(string $locale);
 ```
 
+### Creating models
+You can set catalogue items when creating new model
+```php
+$article = Article::create([
+    'title' => [
+        'en' => 'English title',
+        'it' => 'Italian title',
+    ],
+    'abstract' => [
+        'en' => 'English abstract',
+        'it' => 'Italian abstract',
+    ],
+]);
+```
+or you can set only catalogue items that match the current application locale by setting the attribute value without providing any locale key. For example:
+```php
+// app()->getLocale() == 'de'
+
+$article = Article::create([
+    'title' => 'German title'
+    'abstract' => 'German abstract',
+]);
+```
+is the same as
+```php
+$article = Article::create([
+    'title' => [
+        'de' => 'German title',
+    ],
+    'abstract' => [
+        'de' => 'German abstract',
+    ],
+]);
+```
+
 ## Change log
 Please, see [CHANGELOG](CHANGELOG.md) for more information about what has changed recently.
 
