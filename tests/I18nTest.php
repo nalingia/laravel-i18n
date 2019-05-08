@@ -207,4 +207,37 @@ class I18nTest extends TestCase {
 
     $this->assertSame('', $this->testModel->title);
   }
+
+  /** @test */
+  public function it_should_create_new_model_with_catalogue_using_create_method() {
+    $testModel = TestModel::create([
+      'field_one' => 'Test',
+      'title' => [
+        'en' => 'English Title',
+        'it' => 'Italian Title',
+      ],
+      'field_two' => [
+        'en' => 'English field two',
+        'it' => 'Italian field two',
+      ],
+    ]);
+
+    $this->assertSame('English Title', $testModel->translate('title', 'en'));
+    $this->assertSame('Italian Title', $testModel->translate('title', 'it'));
+    $this->assertSame('English field two', $testModel->translate('field_two', 'en'));
+    $this->assertSame('Italian field two', $testModel->translate('field_two', 'it'));
+  }
+
+  /** @test */
+  public function it_should_create_new_model_with_catalogue_on_app_locale() {
+    app()->setLocale('de');
+    $testModel = TestModel::create([
+      'field_one' => 'Test',
+      'title' => 'Dummy German text',
+      'field_two' => 'Dummy German text #2',
+    ]);
+
+    $this->assertSame('Dummy German text', $testModel->translate('title', 'de'));
+    $this->assertSame('Dummy German text #2', $testModel->translate('field_two', 'de'));
+  }
 }
