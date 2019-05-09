@@ -31,6 +31,23 @@ trait HasI18n {
       return parent::setAttribute($key, $value);
     }
 
+    if (is_array($value)) {
+      $first = null;
+      foreach ($value as $locale => $v) {
+        $locale = is_numeric($locale)
+          ? $this->getLocale()
+          : $locale;
+
+        $item = $this->setCatalogueItem($key, $locale, $v);
+
+        if (!$first) {
+          $first = $item;
+        }
+      }
+
+      return $first;
+    }
+
     return $this->setCatalogueItem($key, $this->getLocale(), $value);
   }
 

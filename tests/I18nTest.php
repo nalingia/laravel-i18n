@@ -328,4 +328,26 @@ class I18nTest extends TestCase {
       'en' => 'English field two',
     ], $testModel->getCatalogueItems('field_two')->toArray());
   }
+
+  /** @test */
+  public function it_should_save_attribute_translations_passed_using_array_with_locale_as_key() {
+    $testModel = new TestModel;
+    $testModel->field_one = 'Dummy text.';
+    $testModel->title = [
+      'en' => 'English title',
+      'it' => 'Italian title',
+    ];
+    $testModel->field_two = [
+      'en' => 'English field two',
+      'it' => 'Italian field two',
+    ];
+
+    $testModel->save();
+
+    $this->assertSame('English title', $testModel->title);
+    $this->assertSame('English field two', $testModel->field_two);
+
+    $this->assertSame('Italian title', $testModel->translate('title', 'it'));
+    $this->assertSame('Italian field two', $testModel->translate('field_two', 'it'));
+  }
 }
