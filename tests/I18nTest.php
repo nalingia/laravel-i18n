@@ -240,4 +240,92 @@ class I18nTest extends TestCase {
     $this->assertSame('Dummy German text', $testModel->translate('title', 'de'));
     $this->assertSame('Dummy German text #2', $testModel->translate('field_two', 'de'));
   }
+
+  /** @test */
+  public function it_can_hold_translations_when_model_not_exists_yet_in_database() {
+    app()->setLocale('en');
+
+    $testModel = new TestModel;
+    $testModel->title = 'English title';
+    $testModel->field_two = 'English field two';
+
+    $this->assertSame('English title', $testModel->title);
+    $this->assertSame('English field two', $testModel->field_two);
+  }
+
+  /** @test */
+  public function it_can_forget_translation_when_model_not_exists_in_database_yet() {
+    app()->setLocale('en');
+
+    $testModel = new TestModel;
+    $testModel->title = 'English title';
+    $testModel->field_two = 'English field two';
+
+    $this->assertSame('English title', $testModel->title);
+    $this->assertSame('English field two', $testModel->field_two);
+
+    $testModel->forgetCatalogueItem('title', 'en');
+    $this->assertEmpty($testModel->title);
+  }
+
+  /** @test */
+  public function it_can_hold_translations_when_model_not_exists_yet_and_save_them_in_database_when_model_s_saved() {
+    app()->setLocale('en');
+
+    $testModel = new TestModel;
+    $testModel->field_one = 'Dummy text.';
+    $testModel->title = 'English title';
+    $testModel->field_two = 'English field two';
+
+    $testModel->save();
+
+    $this->assertSame('English title', $testModel->title);
+    $this->assertSame('English field two', $testModel->field_two);
+  }
+
+  /** @test */
+  public function it_should_return_that_a_translation_exists_when_model_does_not_exist_in_database_yet() {
+    app()->setLocale('en');
+
+    $testModel = new TestModel;
+    $testModel->field_one = 'Dummy text.';
+    $testModel->title = 'English title';
+    $testModel->field_two = 'English field two';
+
+    $this->assertTrue($testModel->hasCatalogueItem('title', 'en'));
+    $this->assertFalse($testModel->hasCatalogueItem('title', 'de'));
+  }
+
+  /** @test */
+  public function it_should_return_all_translations_when_model_does_not_exist_in_database_yet() {
+    app()->setLocale('en');
+
+    $testModel = new TestModel;
+    $testModel->field_one = 'Dummy text.';
+    $testModel->title = 'English title';
+    $testModel->field_two = 'English field two';
+
+    $this->assertSame([
+      'title' => [
+        'en' => 'English title',
+      ],
+      'field_two' => [
+        'en' => 'English field two',
+      ],
+    ], $testModel->getCatalogueItems()->toArray());
+  }
+
+  /** @test */
+  public function it_should_return_all_translations_for_a_give_attribute_when_model_does_not_exist_in_database_yet() {
+    app()->setLocale('en');
+
+    $testModel = new TestModel;
+    $testModel->field_one = 'Dummy text.';
+    $testModel->title = 'English title';
+    $testModel->field_two = 'English field two';
+
+    $this->assertSame([
+      'en' => 'English field two',
+    ], $testModel->getCatalogueItems('field_two')->toArray());
+  }
 }

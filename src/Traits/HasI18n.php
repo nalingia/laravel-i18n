@@ -3,14 +3,16 @@
 namespace Nalingia\I18n\Traits;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Nalingia\I18n\Models\CatalogueItem;
 use Nalingia\I18n\Exceptions\AttributeIsNonCatalogable;
 
 trait HasI18n {
+
+  private $cataloguePool = [];
 
   public function catalogueItems() {
     return $this->morphMany(CatalogueItem::class, $this->getCatalogueMorphName());
@@ -48,10 +50,12 @@ trait HasI18n {
 
     $locale = $this->getNormalisedLocale($key, $locale, $useFallbackLocale);
 
-    $catalogueItem = (string) $this->catalogueItems
-      ->first(function ($item) use ($key, $locale) {
-        return $item->key == $key && $item->{$this->getLocaleIdentifier()} == $locale;
-      });
+    $catalogueItem = !$this->exists
+      ? Arr::get($this->cataloguePool, "{$key}.{$locale}")
+      : (string) $this->catalogueItems
+          ->first(function ($item) use ($key, $locale) {
+            return $item->key == $key && $item->{$this->getLocaleIdentifier()} == $locale;
+          });
 
     if ($this->hasGetMutator($key)) {
       return $this->mutateAttribute($key, $catalogueItem);
@@ -68,17 +72,21 @@ trait HasI18n {
       $value = $this->{$method}($value, $locale);
     }
 
-    $item = $this->catalogueItems()
-      ->updateOrCreate(
-        ['key' => $key, $this->getLocaleIdentifier() => $locale ],
-        ['value' => $value ]
-      );
+    if (!$this->exists) {
+      Arr::set($this->cataloguePool, "{$key}.{$locale}", $value);
+    } else {
+      $item = $this->catalogueItems()
+        ->updateOrCreate(
+          ['key' => $key, $this->getLocaleIdentifier() => $locale ],
+          ['value' => $value ]
+        );
 
-    $this->catalogueItems = $this->catalogueItems->reject(function ($item) use ($locale, $key) {
-      return $item->{$this->getLocaleIdentifier()} == $locale && $item->key == $key;
-    });
+      $this->catalogueItems = $this->catalogueItems->reject(function ($item) use ($locale, $key) {
+        return $item->{$this->getLocaleIdentifier()} == $locale && $item->key == $key;
+      });
 
-    $this->catalogueItems->push($item);
+      $this->catalogueItems->push($item);
+    }
 
     return $this;
   }
@@ -86,13 +94,20 @@ trait HasI18n {
   public function hasCatalogueItem(string $key, ?string $locale = null) : bool {
     $locale = $locale ?? $this->getLocale();
 
-    return $this->catalogueItems
-      ->where($this->getLocaleIdentifier(), $locale)
-      ->keyBy('key')
-      ->has($key);
+    return !$this->exists
+      ? Arr::has($this->cataloguePool, "{$key}.{$locale}")
+      : $this->catalogueItems
+        ->where($this->getLocaleIdentifier(), $locale)
+        ->keyBy('key')
+        ->has($key);
   }
 
   public function forgetCatalogueItem(string $key, string $locale) : self {
+    if (!$this->exists) {
+      Arr::forget($this->cataloguePool, "{$key}.{$locale}");
+      return $this;
+    }
+
     $this->catalogueItems()
       ->where('key', $key)
       ->where($this->getLocaleIdentifier(), $locale)
@@ -106,6 +121,14 @@ trait HasI18n {
   }
 
   public function forgetCatalogueItemsForLocale(string $locale) : self {
+
+    if (!$this->exists) {
+      foreach ($this->cataloguePool as $attribute => &$translations) {
+        Arr::forget($translations, $locale);
+      }
+      return $this;
+    }
+
     $this->catalogueItems()
       ->where($this->getLocaleIdentifier(), $locale)
       ->delete();
@@ -122,16 +145,18 @@ trait HasI18n {
   }
 
   public function getTranslationsAttribute() {
-    return $this->catalogueItems
-      ->groupBy('key')
-      ->mapWithKeys(function ($items) {
-        $key = optional($items->first())->key;
-        return [
-          $key => $items->mapWithKeys(function ($item) {
-            return [ $item->{$this->getLocaleIdentifier()} => $item->value ];
-          })->toArray(),
-        ];
-      });
+    return !$this->exists
+      ? collect($this->cataloguePool)
+      : $this->catalogueItems
+          ->groupBy('key')
+          ->mapWithKeys(function ($items) {
+            $key = optional($items->first())->key;
+            return [
+              $key => $items->mapWithKeys(function ($item) {
+                return [ $item->{$this->getLocaleIdentifier()} => $item->value ];
+              })->toArray(),
+            ];
+          });
   }
 
   public function getCatalogueItems(?string $key = null) : Collection {
@@ -139,38 +164,36 @@ trait HasI18n {
       $this->guardNonCatalogableAttribute($key);
     }
 
-    return $this->catalogueItems
-      ->toBase()
-      ->when(!is_null($key), function ($items) use ($key) {
-        return $items
-          ->where('key', $key)
-          ->mapWithKeys(function ($item) {
-            return [
-              $item->{$this->getLocaleIdentifier()} => $item->value,
-            ];
-          });
-      })
-      ->when(is_null($key), function ($items) {
-        return $items
-          ->groupBy('key')
-          ->mapWithKeys(function ($items, $key) {
-            return [
-              $key => $items->mapWithKeys(function ($item) {
+    return !$this->exists
+      ? (is_null($key) ? collect($this->cataloguePool) : collect(Arr::get($this->cataloguePool, $key)))
+      : $this->catalogueItems
+          ->toBase()
+          ->when(!is_null($key), function ($items) use ($key) {
+            return $items
+              ->where('key', $key)
+              ->mapWithKeys(function ($item) {
                 return [
                   $item->{$this->getLocaleIdentifier()} => $item->value,
                 ];
-              }),
-            ];
+              });
+          })
+          ->when(is_null($key), function ($items) {
+            return $items
+              ->groupBy('key')
+              ->mapWithKeys(function ($items, $key) {
+                return [
+                  $key => $items->mapWithKeys(function ($item) {
+                    return [
+                      $item->{$this->getLocaleIdentifier()} => $item->value,
+                    ];
+                  }),
+                ];
+              });
           });
-      });
   }
 
   /**
    * {@inheritdoc}
-   *
-   * Use `catalogue` key on `$attributes` to create translations.
-   *
-   * @param self $parent
    */
   public static function create(array $attributes = []) {
     $instance = new static;
@@ -186,24 +209,23 @@ trait HasI18n {
     $instance->fill($attributes);
     $instance->save();
 
-    $items = new EloquentCollection;
-
-    $catalogue
-      ->each(function ($translations, $attribute) use (&$instance, &$items) {
-        collect($translations)
-          ->each(function ($value, $locale) use ($attribute, &$instance, &$items) {
-            $locale = is_numeric($locale) ? $instance->getLocale() : $locale;
-            $item = $instance->catalogueItems()
-              ->create([
-                'key' => $attribute,
-                $instance->getLocaleIdentifier() => $locale ,
-                'value' => $value
-              ]);
-            $items->add($item);
-          });
-      });
-
+    $items = $instance->saveTranslationsArray($catalogue);
     return $instance->setRelation('catalogueItems', $items);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function save(array $options = []) {
+    $saved = parent::save($options);
+
+    if ($saved && !empty($this->cataloguePool)) {
+      $items = $this->saveTranslationsArray($this->cataloguePool);
+      $this->setRelation('catalogueItems', $items);
+      $this->cataloguePool = [];
+    }
+
+    return $saved;
   }
 
   protected function getCatalogueMorphName() {
@@ -252,4 +274,24 @@ trait HasI18n {
     return config('app.locale');
   }
 
+  private function saveTranslationsArray($attributes) : EloquentCollection {
+    $items = new EloquentCollection;
+
+    collect($attributes)
+      ->each(function ($translations, $attribute) use (&$items) {
+        collect($translations)
+          ->each(function ($value, $locale) use ($attribute, &$items) {
+            $locale = is_numeric($locale) ? $this->getLocale() : $locale;
+            $item = $this->catalogueItems()
+              ->create([
+                'key' => $attribute,
+                $this->getLocaleIdentifier() => $locale ,
+                'value' => $value
+              ]);
+            $items->add($item);
+          });
+      });
+
+    return $items;
+  }
 }
