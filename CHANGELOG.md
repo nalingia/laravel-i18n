@@ -1,11 +1,20 @@
 # Changelog
 
-## 1.1.1 2019/05/09
+## 1.1.2 2019/05/09
 - Fixed an issue when translating models which are not persisted in database yet. Now you can ask, set and remove translations also when the model
 does not exist.
 ```php
 $instance = new Model;
 $instance->title = 'Translated title';
+$instance->save();
+```
+- Fixed an issue when assigning array with translations to catalogue attributes.
+```php
+$instance = new Model;
+$instance->title = [
+  'en' => 'English title',
+  'it' => 'Italian title',
+];
 $instance->save();
 ```
 
