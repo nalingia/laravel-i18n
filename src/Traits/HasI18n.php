@@ -3,7 +3,6 @@
 namespace Nalingia\I18n\Traits;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -13,6 +12,12 @@ use Nalingia\I18n\Exceptions\AttributeIsNonCatalogable;
 trait HasI18n {
 
   private $cataloguePool = [];
+
+  protected function initializeHasI18n() {
+    $this->addHidden('catalogueItems');
+
+    $this->with = array_unique(array_merge($this->with, ['catalogueItems']));
+  }
 
   public function catalogueItems() {
     return $this->morphMany(CatalogueItem::class, $this->getCatalogueMorphName());

@@ -3,6 +3,7 @@
 namespace Nalingia\I18n\Tests;
 
 use Nalingia\I18n\Exceptions\AttributeIsNonCatalogable;
+use ReflectionClass;
 
 class I18nTest extends TestCase {
 
@@ -349,5 +350,21 @@ class I18nTest extends TestCase {
 
     $this->assertSame('Italian title', $testModel->translate('title', 'it'));
     $this->assertSame('Italian field two', $testModel->translate('field_two', 'it'));
+  }
+
+  /** @test */
+  public function it_should_append_catalogue_items_relation_to_with_property_during_trait_initialisation() {
+    $testModel = new TestModel;
+    $reflectionClass = new ReflectionClass(TestModel::class);
+    $withProperty = $reflectionClass->getProperty('with');
+    $withProperty->setAccessible(true);
+
+    $this->assertContains('catalogueItems', $withProperty->getValue($testModel));
+  }
+
+  /** @test */
+  public function it_should_hide_catalogue_items_relation_during_trait_initialisation() {
+    $testModel = new TestModel;
+    $this->assertContains('catalogueItems', $testModel->getHidden());
   }
 }
