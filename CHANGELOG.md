@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.3 2019/05/10
+- Added `initializeHasI18n` method to add `catalogueItems` relation to `$with` and `$hidden` array when booting new model.
+
 ## 1.1.2 2019/05/09
 - Fixed an issue when translating models which are not persisted in database yet. Now you can ask, set and remove translations also when the model
 does not exist.

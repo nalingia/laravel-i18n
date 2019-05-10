@@ -34,7 +34,8 @@ It has a minimum configuration available. You can publish using
 To enable internationalisation in your models, follow these simple steps:
 1. Import `Nalingia\I18n\Traits\HasI18n` trait into you model.
 2. Add a public property named `$catalogueAttributes`: it will contains all attributes that will be translated.
-3. Add `'catalogueItems'` to model's `$with` array.
+3. Add `'catalogueItems'` to model's `$with` array when using Lavavel 5.6 or below. Starting from Laravel 5.7 imported
+traits can initialize everything needed when a model is booting. HasI18n can append `'catalogueItems'` to `$with` and `$hidden` arrays.
 
 Here's an set up example:
  ```php
