@@ -288,6 +288,13 @@ trait HasI18n {
       ->toArray();
   }
 
+  public function getCatalogueLocales() : array {
+    return $this->catalogueItems
+      ->pluck('lang')
+      ->unique()
+      ->toArray();
+  }
+
   protected function getLocaleIdentifier() : string {
     return config('i18n.locale_identifier');
   }

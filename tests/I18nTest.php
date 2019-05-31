@@ -367,4 +367,14 @@ class I18nTest extends TestCase {
     $testModel = new TestModel;
     $this->assertContains('catalogueItems', $testModel->getHidden());
   }
+
+  /** @test */
+  public function it_should_return_all_available_locales() {
+    $this->testModel
+      ->setCatalogueItem('title', 'en', 'This is an english text.')
+      ->setCatalogueItem('title', 'it', 'This is an italian text.')
+      ->setCatalogueItem('field_two', 'de', 'This is a german description');
+
+    $this->assertSame(['en', 'it', 'de'], $this->testModel->getCatalogueLocales());
+  }
 }
