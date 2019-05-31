@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.4 2019/05/31
+- Added `getCatalogueLocales` to get all available locales for a model. 
+
 ## 1.1.3 2019/05/10
 - Added `initializeHasI18n` method to add `catalogueItems` relation to `$with` and `$hidden` array when booting new model.
 

@@ -87,6 +87,19 @@ Or you can use the accessor
 $article->translations
 ```
 
+#### Retrieve all available locales
+You can get all available locale for which exist at least one catalogue item by calling `getCatalogueLocales()`:
+```php
+$article
+  ->setCatalogueItem('title', 'en', 'English title')
+  ->setCatalogueItem('abstract', 'en', 'English abstract')
+  ->setCatalogueItem('title', 'it', 'Italian title')
+  ->setCatalogueItem('abstract', 'it', 'Italian abstract')
+  ->setCatalogueItem('abstract', 'de', 'German abstract');
+  
+$article->getCatalogueLocales(); // ['it', 'en', 'de']
+```
+
 #### Setting a catalogue item
 Setting translation for current application locale is as easy as setting a model's property:
 ```php
